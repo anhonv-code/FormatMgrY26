@@ -33,12 +33,12 @@ def on_startup():
 
 
 # Routers
-app.include_router(equipment.router)
-app.include_router(downtime.router)
-app.include_router(sales.router)
+app.include_router(equipment.router, prefix="/api")
+app.include_router(downtime.router, prefix="/api")
+app.include_router(sales.router, prefix="/api")
 
 
-@app.get("/shops")
+@app.get("/api/shops")
 def list_shops(db: Session = Depends(get_db)):
     from models import Shop
     from schemas import ShopOut
@@ -46,6 +46,7 @@ def list_shops(db: Session = Depends(get_db)):
     return [ShopOut.model_validate(s) for s in shops]
 
 
+@app.get("/api/health")
 @app.get("/health")
 def health():
     return {"status": "ok"}
