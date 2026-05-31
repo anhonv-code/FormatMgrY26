@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { HashRouter as BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import DowntimeDashboard from './pages/DowntimeDashboard'
 import DowntimeLogger from './pages/DowntimeLogger'
