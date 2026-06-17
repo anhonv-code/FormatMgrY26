@@ -2,79 +2,109 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>🍬 สุ่มขนม — Candy Spin Wheel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+  <title>🍬 สุ่มขนม</title>
   <style>
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
+    :root {
+      --gold: #f7c948;
+      --gold2: #ff8c00;
+      --bg1: #0f0c29;
+      --bg2: #302b63;
+      --bg3: #24243e;
+      --win: #5ef080;
+      --lose: #ff7675;
+      --card: rgba(255,255,255,.07);
+    }
+
     body {
       font-family: 'Segoe UI', Tahoma, sans-serif;
-      background: linear-gradient(160deg, #0f0c29, #302b63, #24243e);
+      background: linear-gradient(160deg, var(--bg1), var(--bg2), var(--bg3));
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 24px 16px 40px;
+      padding: 20px 16px 48px;
       color: #fff;
     }
 
     /* ── HEADER ── */
-    header { text-align: center; margin-bottom: 20px; }
-    header h1 { font-size: 2.4rem; letter-spacing: 2px; text-shadow: 0 0 20px #f7c948; }
-    header p  { margin-top: 6px; color: rgba(255,255,255,.75); font-size: .95rem; }
+    header { text-align: center; margin-bottom: 10px; }
+    header h1 {
+      font-size: clamp(1.8rem, 6vw, 2.6rem);
+      letter-spacing: 2px;
+      text-shadow: 0 0 24px var(--gold);
+    }
+    header p { color: rgba(255,255,255,.7); font-size: .9rem; margin-top: 4px; }
 
-    /* ── PRICE BADGE ── */
+    /* ── SETTINGS BAR ── */
+    .settings-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .settings-bar label { font-size: .85rem; color: rgba(255,255,255,.7); }
+    .settings-bar input[type=number] {
+      width: 64px;
+      padding: 5px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,.25);
+      background: rgba(255,255,255,.1);
+      color: #fff;
+      font-size: .9rem;
+      text-align: center;
+    }
     .badge {
       background: rgba(247,201,72,.15);
       border: 1px solid rgba(247,201,72,.4);
-      color: #f7c948;
-      padding: 6px 18px;
+      color: var(--gold);
+      padding: 5px 16px;
       border-radius: 20px;
-      font-size: .9rem;
+      font-size: .85rem;
       font-weight: 600;
-      margin-bottom: 22px;
     }
 
-    /* ── WHEEL WRAPPER ── */
+    /* ── WHEEL ── */
     .wheel-wrap {
       position: relative;
-      width: 360px;
-      height: 360px;
+      width: min(340px, 90vw);
+      height: min(340px, 90vw);
       display: flex;
       align-items: center;
       justify-content: center;
+      margin-bottom: 6px;
     }
-
-    /* pointer triangle — fixed, above wheel */
     .pointer {
       position: absolute;
-      top: -14px;
+      top: -12px;
       left: 50%;
       transform: translateX(-50%);
-      width: 0;
-      height: 0;
-      border-left:  16px solid transparent;
-      border-right: 16px solid transparent;
-      border-top:   40px solid #f7c948;
+      width: 0; height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-top: 36px solid var(--gold);
       filter: drop-shadow(0 3px 8px rgba(0,0,0,.6));
       z-index: 10;
     }
-
     #wheelCanvas {
       border-radius: 50%;
-      box-shadow: 0 0 50px rgba(247,201,72,.25), 0 10px 40px rgba(0,0,0,.5);
-      /* transition handled by JS; set here as default */
+      box-shadow: 0 0 50px rgba(247,201,72,.2), 0 10px 40px rgba(0,0,0,.5);
       transition: transform 4s cubic-bezier(0.22, 1, 0.36, 1);
       will-change: transform;
+      width: 100%; height: 100%;
     }
 
-    /* ── SPIN BUTTON ── */
+    /* ── BUTTONS ── */
+    .btn-row { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; justify-content: center; }
     .spin-btn {
-      margin-top: 26px;
-      padding: 14px 48px;
-      font-size: 1.25rem;
+      padding: 14px 40px;
+      font-size: 1.15rem;
       font-weight: 700;
-      background: linear-gradient(135deg, #f7c948, #ff8c00);
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
       color: #1a1a2e;
       border: none;
       border-radius: 50px;
@@ -83,92 +113,109 @@
       transition: transform .15s, box-shadow .15s;
       letter-spacing: .5px;
     }
-    .spin-btn:hover:not(:disabled) {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 30px rgba(247,201,72,.55);
-    }
+    .spin-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(247,201,72,.55); }
     .spin-btn:active:not(:disabled) { transform: translateY(0); }
-    .spin-btn:disabled {
-      background: #555;
-      color: #999;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
+    .spin-btn:disabled { background: #555; color: #888; cursor: not-allowed; box-shadow: none; }
 
-    /* ── STOCK INDICATOR ── */
+    .reset-btn {
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.25);
+      color: #fff;
+      border-radius: 50px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .reset-btn:hover { background: rgba(255,255,255,.2); }
+
+    /* ── STOCK DOTS ── */
     .stock-row {
-      margin-top: 18px;
+      margin-top: 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: .95rem;
+      gap: 8px;
+      font-size: .9rem;
       color: rgba(255,255,255,.8);
-    }
-    .stock-dots {
-      display: flex;
-      gap: 4px;
       flex-wrap: wrap;
-      max-width: 240px;
+      justify-content: center;
     }
+    .stock-dots { display: flex; gap: 4px; flex-wrap: wrap; max-width: min(280px, 85vw); justify-content: center; }
     .dot {
-      width: 14px;
-      height: 14px;
+      width: 13px; height: 13px;
       border-radius: 50%;
-      background: #f7c948;
+      background: var(--gold);
       transition: background .3s, transform .3s;
     }
-    .dot.used {
-      background: rgba(255,255,255,.18);
-      transform: scale(.75);
-    }
+    .dot.used { background: rgba(255,255,255,.15); transform: scale(.7); }
 
     /* ── STATS ── */
     .stats {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 12px;
+      gap: 10px;
       width: 100%;
       max-width: 400px;
-      margin-top: 24px;
+      margin-top: 18px;
     }
     .stat-card {
-      background: rgba(255,255,255,.07);
+      background: var(--card);
       backdrop-filter: blur(6px);
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 16px;
-      padding: 14px 16px;
+      padding: 12px 14px;
       text-align: center;
     }
-    .stat-card .val {
-      font-size: 1.65rem;
-      font-weight: 700;
-    }
-    .stat-card .lbl {
-      font-size: .75rem;
-      color: rgba(255,255,255,.6);
-      margin-top: 2px;
-    }
-    #profitVal { color: #5ef080; }
+    .stat-card .val { font-size: 1.5rem; font-weight: 700; }
+    .stat-card .lbl { font-size: .72rem; color: rgba(255,255,255,.55); margin-top: 2px; }
+    #profitVal { color: var(--win); }
 
-    /* ── PROFIT NOTE ── */
-    .note {
-      margin-top: 10px;
-      font-size: .72rem;
-      color: rgba(255,255,255,.4);
-      text-align: center;
+    /* ── HISTORY ── */
+    .history-wrap {
+      width: 100%;
+      max-width: 400px;
+      margin-top: 16px;
     }
+    .history-title { font-size: .8rem; color: rgba(255,255,255,.5); margin-bottom: 8px; text-align: center; }
+    .history-list {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .h-chip {
+      padding: 5px 14px;
+      border-radius: 20px;
+      font-size: .82rem;
+      font-weight: 600;
+      animation: popIn .25s ease;
+    }
+    .h-chip.win  { background: rgba(94,240,128,.15); border: 1px solid rgba(94,240,128,.4); color: var(--win); }
+    .h-chip.lose { background: rgba(255,118,117,.1);  border: 1px solid rgba(255,118,117,.3); color: var(--lose); }
+    @keyframes popIn { from { transform: scale(.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    /* ── SOUND TOGGLE ── */
+    .sound-toggle {
+      margin-top: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+      color: rgba(255,255,255,.5);
+      cursor: pointer;
+      user-select: none;
+    }
+    .sound-toggle input { cursor: pointer; }
 
     /* ── OVERLAY & POPUP ── */
     .overlay {
       position: fixed; inset: 0;
       background: rgba(0,0,0,.55);
       backdrop-filter: blur(4px);
-      z-index: 50;
-      display: none;
-      cursor: pointer;
+      z-index: 50; display: none; cursor: pointer;
     }
     .overlay.show { display: block; }
-
     .popup {
       position: fixed;
       top: 50%; left: 50%;
@@ -177,56 +224,38 @@
       background: #1e1b3a;
       border: 1px solid rgba(255,255,255,.15);
       border-radius: 28px;
-      padding: 36px 48px;
+      padding: 32px 44px;
       text-align: center;
       box-shadow: 0 24px 70px rgba(0,0,0,.7);
       z-index: 60;
       transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .25s;
-      min-width: 280px;
+      min-width: 260px;
+      max-width: 90vw;
     }
-    .popup.show {
-      transform: translate(-50%, -50%) scale(1);
-      opacity: 1;
-    }
-    .popup .p-icon { font-size: 4.5rem; margin-bottom: 8px; }
-    .popup .p-title {
-      font-size: 1.6rem;
-      font-weight: 700;
-      margin-bottom: 6px;
-    }
-    .popup .p-sub {
-      font-size: .9rem;
-      color: rgba(255,255,255,.65);
-      margin-bottom: 20px;
-    }
-    .popup.win  .p-title { color: #5ef080; }
-    .popup.lose .p-title { color: #ff7675; }
-
+    .popup.show { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    .popup .p-icon { font-size: 4rem; margin-bottom: 8px; }
+    .popup .p-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 6px; }
+    .popup .p-sub { font-size: .85rem; color: rgba(255,255,255,.65); margin-bottom: 20px; }
+    .popup.win  .p-title { color: var(--win); }
+    .popup.lose .p-title { color: var(--lose); }
     .close-btn {
-      padding: 10px 32px;
-      background: linear-gradient(135deg, #f7c948, #ff8c00);
-      color: #1a1a2e;
-      font-weight: 700;
-      border: none;
-      border-radius: 25px;
-      cursor: pointer;
-      font-size: 1rem;
+      padding: 10px 28px;
+      background: linear-gradient(135deg, var(--gold), var(--gold2));
+      color: #1a1a2e; font-weight: 700;
+      border: none; border-radius: 25px;
+      cursor: pointer; font-size: .95rem;
       transition: transform .15s;
     }
     .close-btn:hover { transform: scale(1.05); }
 
     /* ── CONFETTI ── */
     .confetti-piece {
-      position: fixed;
-      top: -20px;
+      position: fixed; top: -20px;
       font-size: 1.6rem;
       animation: fall linear forwards;
-      pointer-events: none;
-      z-index: 70;
+      pointer-events: none; z-index: 70;
     }
-    @keyframes fall {
-      to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
-    }
+    @keyframes fall { to { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
   </style>
 </head>
 <body>
@@ -236,25 +265,33 @@
   <p>หมุนวงล้อเพื่อลุ้นรับขนม!</p>
 </header>
 
-<div class="badge">💰 ราคาหมุนครั้งละ <strong>10 บาท</strong></div>
+<div class="settings-bar">
+  <span class="badge">💰 ราคาหมุน <strong>10฿</strong>/ครั้ง</span>
+  <label>ขนมทั้งหมด
+    <input type="number" id="stockInput" value="20" min="1" max="99" />
+  </label>
+</div>
 
 <div class="wheel-wrap">
   <div class="pointer"></div>
-  <canvas id="wheelCanvas" width="340" height="340"></canvas>
+  <canvas id="wheelCanvas"></canvas>
 </div>
 
-<button class="spin-btn" id="spinBtn">🎰 หมุนเลย! (10฿)</button>
+<div class="btn-row">
+  <button class="spin-btn" id="spinBtn">🎰 หมุนเลย! (10฿)</button>
+  <button class="reset-btn" id="resetBtn">🔄 รีเซ็ต</button>
+</div>
 
 <div class="stock-row">
-  <span>ขนมคงเหลือ:</span>
+  <span>เหลือ:</span>
   <div class="stock-dots" id="stockDots"></div>
-  <span id="stockNum">20</span> <span>ชิ้น</span>
+  <span><b id="stockNum">20</b> ชิ้น</span>
 </div>
 
 <div class="stats">
   <div class="stat-card">
     <div class="val" id="spinsVal">0</div>
-    <div class="lbl">จำนวนหมุน (ครั้ง)</div>
+    <div class="lbl">ครั้งที่หมุน</div>
   </div>
   <div class="stat-card">
     <div class="val" id="revenueVal">0฿</div>
@@ -269,11 +306,17 @@
     <div class="lbl">กำไรสุทธิ</div>
   </div>
 </div>
-<div class="note">
-  สูตรกำไร: ราคาหมุน 10฿ × อัตราชนะ 67% → ต้นทุนเฉลี่ย 4฿/ครั้ง → กำไร ~6฿/ครั้ง
+
+<div class="history-wrap">
+  <div class="history-title">ผลล่าสุด 8 ครั้ง</div>
+  <div class="history-list" id="historyList"></div>
 </div>
 
-<!-- Overlay + popup -->
+<label class="sound-toggle">
+  <input type="checkbox" id="soundToggle" checked />
+  เสียงเอฟเฟกต์
+</label>
+
 <div class="overlay" id="overlay"></div>
 <div class="popup" id="popup">
   <div class="p-icon" id="pIcon"></div>
@@ -283,202 +326,229 @@
 </div>
 
 <script>
-/* ── WHEEL DATA ──────────────────────────────────────────────────────── */
-// 12 sections: 8 win (candy) + 4 lose  →  win-rate ≈ 66.7%
-// Expected candy cost per spin = 0.667 × 6 = 4฿
-// Charge 10฿ → expected profit = 6฿ / spin
+/* ── CONFIG ─────────────────────────────────────────────────────────── */
+const SPIN_COST  = 10;
+const CANDY_COST = 6;
+// 12 sections: 8 win + 4 lose → win-rate 66.7% → avg profit 6฿/spin
 const SECTIONS = [
   { emoji:'🍬', label:'ได้ขนม!', type:'win',  bg:'#ff6b6b', fg:'#2d0000' },
   { emoji:'🍭', label:'ได้ขนม!', type:'win',  bg:'#4ecdc4', fg:'#002d2b' },
-  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#4a4a6a', fg:'#ccc'    },
+  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#3a3a5c', fg:'#aaa'    },
   { emoji:'🍫', label:'ได้ขนม!', type:'win',  bg:'#f7dc6f', fg:'#2d2500' },
   { emoji:'🍡', label:'ได้ขนม!', type:'win',  bg:'#c39bd3', fg:'#200030' },
-  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#4a4a6a', fg:'#ccc'    },
+  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#3a3a5c', fg:'#aaa'    },
   { emoji:'🧁', label:'ได้ขนม!', type:'win',  bg:'#f0b27a', fg:'#2d1400' },
   { emoji:'🍩', label:'ได้ขนม!', type:'win',  bg:'#82e0aa', fg:'#002d12' },
-  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#4a4a6a', fg:'#ccc'    },
+  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#3a3a5c', fg:'#aaa'    },
   { emoji:'🍪', label:'ได้ขนม!', type:'win',  bg:'#85c1e9', fg:'#001a2d' },
   { emoji:'🍮', label:'ได้ขนม!', type:'win',  bg:'#f1948a', fg:'#2d0000' },
-  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#4a4a6a', fg:'#ccc'    },
+  { emoji:'💨', label:'ลองใหม่', type:'lose', bg:'#3a3a5c', fg:'#aaa'    },
 ];
-
-const SPIN_COST   = 10;
-const CANDY_COST  = 6;
-const INIT_STOCK  = 20;
-const N           = SECTIONS.length;
-const SEC_DEG     = 360 / N;
+const N = SECTIONS.length;
+const SEC_DEG = 360 / N;
 
 /* ── STATE ──────────────────────────────────────────────────────────── */
-let spinning    = false;
-let currentDeg  = 0;          // accumulated CSS rotation (degrees)
-let stock       = INIT_STOCK;
-let totalSpins  = 0;
-let revenue     = 0;
-let costTotal   = 0;
+let spinning   = false;
+let currentDeg = 0;
+let stock, totalSpins, revenue, costTotal, history;
 
-/* ── CANVAS SETUP ───────────────────────────────────────────────────── */
+function getInitStock() {
+  return Math.max(1, Math.min(99, parseInt(document.getElementById('stockInput').value) || 20));
+}
+
+function initState() {
+  stock = getInitStock();
+  totalSpins = 0;
+  revenue    = 0;
+  costTotal  = 0;
+  history    = [];
+  currentDeg = 0;
+  canvas.style.transition = 'none';
+  canvas.style.transform  = 'rotate(0deg)';
+  updateUI();
+  buildDots();
+  renderHistory();
+  const btn = document.getElementById('spinBtn');
+  btn.disabled = false;
+  btn.textContent = '🎰 หมุนเลย! (10฿)';
+}
+
+/* ── CANVAS ─────────────────────────────────────────────────────────── */
 const canvas = document.getElementById('wheelCanvas');
 const ctx    = canvas.getContext('2d');
-const CX = canvas.width  / 2;
-const CY = canvas.height / 2;
-const R  = CX - 8;
+
+function resizeCanvas() {
+  const size = Math.min(340, window.innerWidth * 0.88);
+  canvas.width = canvas.height = Math.round(size);
+  drawWheel();
+}
 
 function drawWheel() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  const W = canvas.width, CX = W/2, CY = W/2, R = CX - 6;
+  ctx.clearRect(0, 0, W, W);
   for (let i = 0; i < N; i++) {
-    const start = (i * SEC_DEG - 90) * Math.PI / 180;
-    const end   = ((i + 1) * SEC_DEG - 90) * Math.PI / 180;
-    const mid   = ((i + 0.5) * SEC_DEG - 90) * Math.PI / 180;
-
-    // Slice
-    ctx.beginPath();
-    ctx.moveTo(CX, CY);
-    ctx.arc(CX, CY, R, start, end);
-    ctx.closePath();
-    ctx.fillStyle = SECTIONS[i].bg;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Text (emoji + label) — rotate so text reads outward
-    const tx = CX + R * 0.64 * Math.cos(mid);
-    const ty = CY + R * 0.64 * Math.sin(mid);
-    ctx.save();
-    ctx.translate(tx, ty);
-    ctx.rotate(mid + Math.PI / 2);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    ctx.font = '22px Arial';
-    ctx.fillText(SECTIONS[i].emoji, 0, -9);
-
-    ctx.font = 'bold 10px Segoe UI, sans-serif';
-    ctx.fillStyle = SECTIONS[i].fg;
-    ctx.fillText(SECTIONS[i].label, 0, 9);
+    const s = (i * SEC_DEG - 90) * Math.PI/180;
+    const e = ((i+1) * SEC_DEG - 90) * Math.PI/180;
+    const m = ((i+.5) * SEC_DEG - 90) * Math.PI/180;
+    ctx.beginPath(); ctx.moveTo(CX,CY); ctx.arc(CX,CY,R,s,e); ctx.closePath();
+    ctx.fillStyle = SECTIONS[i].bg; ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.2)'; ctx.lineWidth = 1.5; ctx.stroke();
+    const tx = CX + R*.64*Math.cos(m), ty = CY + R*.64*Math.sin(m);
+    ctx.save(); ctx.translate(tx,ty); ctx.rotate(m + Math.PI/2);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const fs = Math.max(14, Math.round(W * .063));
+    ctx.font = `${fs}px Arial`; ctx.fillText(SECTIONS[i].emoji, 0, -fs*.45);
+    ctx.font = `bold ${Math.max(8, Math.round(W*.028))}px Segoe UI,sans-serif`;
+    ctx.fillStyle = SECTIONS[i].fg; ctx.fillText(SECTIONS[i].label, 0, fs*.6);
     ctx.restore();
   }
-
-  // Outer gold ring
-  ctx.beginPath();
-  ctx.arc(CX, CY, R, 0, 2 * Math.PI);
-  ctx.strokeStyle = '#f7c948';
-  ctx.lineWidth = 5;
-  ctx.stroke();
-
-  // Centre hub
-  const grad = ctx.createRadialGradient(CX, CY, 0, CX, CY, 26);
-  grad.addColorStop(0, '#ffe566');
-  grad.addColorStop(1, '#e67e00');
-  ctx.beginPath();
-  ctx.arc(CX, CY, 26, 0, 2 * Math.PI);
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.strokeStyle = '#fff';
-  ctx.lineWidth = 3;
-  ctx.stroke();
-
-  ctx.font = '18px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('⭐', CX, CY);
+  // gold ring
+  ctx.beginPath(); ctx.arc(CX,CY,R,0,2*Math.PI);
+  ctx.strokeStyle = '#f7c948'; ctx.lineWidth = 4; ctx.stroke();
+  // hub
+  const g = ctx.createRadialGradient(CX,CY,0,CX,CY,CX*.08);
+  g.addColorStop(0,'#ffe566'); g.addColorStop(1,'#e67e00');
+  ctx.beginPath(); ctx.arc(CX,CY,CX*.08,0,2*Math.PI);
+  ctx.fillStyle = g; ctx.fill();
+  ctx.strokeStyle = '#fff'; ctx.lineWidth = 2.5; ctx.stroke();
+  ctx.font = `${Math.round(CX*.11)}px Arial`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText('⭐',CX,CY);
 }
 
-/* ── STOCK DOTS ─────────────────────────────────────────────────────── */
-const stockDotsEl = document.getElementById('stockDots');
+/* ── DOTS ───────────────────────────────────────────────────────────── */
 function buildDots() {
-  stockDotsEl.innerHTML = '';
-  for (let i = 0; i < INIT_STOCK; i++) {
+  const el = document.getElementById('stockDots');
+  el.innerHTML = '';
+  for (let i = 0; i < stock; i++) {
     const d = document.createElement('div');
-    d.className = 'dot' + (i >= stock ? ' used' : '');
-    d.id = `dot-${i}`;
-    stockDotsEl.appendChild(d);
+    d.className = 'dot'; d.id = `dot-${i}`; el.appendChild(d);
   }
+  document.getElementById('stockNum').textContent = stock;
 }
-function useDot() {
-  const dotEl = document.getElementById(`dot-${stock}`);
-  if (dotEl) dotEl.classList.add('used');
+function useDot(idx) {
+  const d = document.getElementById(`dot-${idx}`);
+  if (d) d.classList.add('used');
+}
+
+/* ── HISTORY ────────────────────────────────────────────────────────── */
+function renderHistory() {
+  const el = document.getElementById('historyList');
+  el.innerHTML = '';
+  history.slice(-8).forEach(h => {
+    const c = document.createElement('div');
+    c.className = `h-chip ${h.type}`;
+    c.textContent = h.type === 'win' ? `${h.emoji} ได้ขนม` : '💨 ไม่ได้';
+    el.prepend(c);
+  });
+}
+
+/* ── SOUND ──────────────────────────────────────────────────────────── */
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+function playWin() {
+  if (!document.getElementById('soundToggle').checked) return;
+  try {
+    const ac = getAudio();
+    [523,659,784,1047].forEach((f,i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value = f; o.type = 'sine';
+      const t = ac.currentTime + i*.12;
+      g.gain.setValueAtTime(.3, t); g.gain.exponentialRampToValueAtTime(.001, t+.3);
+      o.start(t); o.stop(t+.3);
+    });
+  } catch(e) {}
+}
+function playLose() {
+  if (!document.getElementById('soundToggle').checked) return;
+  try {
+    const ac = getAudio();
+    [300,250].forEach((f,i) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.connect(g); g.connect(ac.destination);
+      o.frequency.value = f; o.type = 'sine';
+      const t = ac.currentTime + i*.18;
+      g.gain.setValueAtTime(.25, t); g.gain.exponentialRampToValueAtTime(.001, t+.35);
+      o.start(t); o.stop(t+.35);
+    });
+  } catch(e) {}
 }
 
 /* ── SPIN ───────────────────────────────────────────────────────────── */
 document.getElementById('spinBtn').addEventListener('click', spin);
+document.getElementById('resetBtn').addEventListener('click', () => { closePopup(); initState(); });
+document.getElementById('stockInput').addEventListener('change', initState);
 
 function spin() {
   if (spinning || stock <= 0) return;
   spinning = true;
   document.getElementById('spinBtn').disabled = true;
 
-  // Pick target section
-  const targetIdx = Math.floor(Math.random() * N);
+  const idx = Math.floor(Math.random() * N);
+  const needed = (360 - (idx + .5) * SEC_DEG % 360 + 360) % 360;
+  const norm   = ((currentDeg % 360) + 360) % 360;
+  const delta  = ((needed - norm) + 360) % 360 || 360;
+  const newDeg = currentDeg + 1440 + delta;
 
-  // How many degrees to rotate so targetIdx lands under the pointer.
-  // Pointer is at top (0°). Section i occupies [(i)*SEC_DEG, (i+1)*SEC_DEG] clockwise from top.
-  // After CW rotation X, the section at pointer was originally at (360 - X%360) from top.
-  // We want (targetIdx + 0.5)*SEC_DEG = 360 - (newDeg % 360)  → solve for delta
-  const targetCenter = (targetIdx + 0.5) * SEC_DEG;                     // degrees from top
-  const needed       = (360 - targetCenter % 360 + 360) % 360;          // CW rotation needed (mod 360)
-  const currentNorm  = ((currentDeg % 360) + 360) % 360;
-  const delta        = ((needed - currentNorm) + 360) % 360 || 360;     // always positive
-  const newDeg       = currentDeg + 1440 + delta;                       // ≥ 4 full spins
-
-  // Disable transition then reset, re-enable, set target (prevents glitch on first spin)
   canvas.style.transition = 'none';
   canvas.style.transform  = `rotate(${currentDeg}deg)`;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    canvas.style.transition = 'transform 4s cubic-bezier(0.22, 1, 0.36, 1)';
+    canvas.style.transform  = `rotate(${newDeg}deg)`;
+  }));
 
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      canvas.style.transition = 'transform 4s cubic-bezier(0.22, 1, 0.36, 1)';
-      canvas.style.transform  = `rotate(${newDeg}deg)`;
-    });
-  });
-
-  canvas.addEventListener('transitionend', function handler() {
-    canvas.removeEventListener('transitionend', handler);
+  canvas.addEventListener('transitionend', function h() {
+    canvas.removeEventListener('transitionend', h);
     currentDeg = newDeg;
     spinning   = false;
 
-    // Update stats
-    totalSpins++;
-    revenue += SPIN_COST;
-    if (SECTIONS[targetIdx].type === 'win') {
+    totalSpins++; revenue += SPIN_COST;
+    const sec = SECTIONS[idx];
+    if (sec.type === 'win') {
       costTotal += CANDY_COST;
-      useDot();
+      useDot(stock - 1);
       stock--;
       document.getElementById('stockNum').textContent = stock;
     }
-    updateStats();
-    showPopup(SECTIONS[targetIdx]);
-
+    history.push({ type: sec.type, emoji: sec.emoji });
+    updateUI(); renderHistory();
+    sec.type === 'win' ? playWin() : playLose();
+    showPopup(sec);
     if (stock <= 0) {
-      const btn = document.getElementById('spinBtn');
-      btn.textContent = '❌ ขนมหมดแล้ว';
-      btn.disabled = true;
+      document.getElementById('spinBtn').textContent = '❌ ขนมหมดแล้ว';
+      document.getElementById('spinBtn').disabled = true;
     } else {
       document.getElementById('spinBtn').disabled = false;
     }
   });
 }
 
-/* ── STATS ──────────────────────────────────────────────────────────── */
-function updateStats() {
+/* ── UI ─────────────────────────────────────────────────────────────── */
+function updateUI() {
+  const profit = revenue - costTotal;
   document.getElementById('spinsVal').textContent   = totalSpins;
   document.getElementById('revenueVal').textContent = revenue + '฿';
   document.getElementById('costVal').textContent    = costTotal + '฿';
-  document.getElementById('profitVal').textContent  = (revenue - costTotal) + '฿';
+  document.getElementById('profitVal').textContent  = profit + '฿';
+  document.getElementById('profitVal').style.color  = profit >= 0 ? 'var(--win)' : 'var(--lose)';
 }
 
 /* ── POPUP ──────────────────────────────────────────────────────────── */
-const overlay  = document.getElementById('overlay');
-const popup    = document.getElementById('popup');
-const closeBtn = document.getElementById('closeBtn');
+const overlay = document.getElementById('overlay');
+const popup   = document.getElementById('popup');
+document.getElementById('closeBtn').addEventListener('click', closePopup);
+overlay.addEventListener('click', closePopup);
 
-function showPopup(section) {
-  popup.className = 'popup ' + section.type;
-  document.getElementById('pIcon').textContent  = section.emoji;
-  if (section.type === 'win') {
+function showPopup(sec) {
+  popup.className = 'popup ' + sec.type;
+  document.getElementById('pIcon').textContent  = sec.emoji;
+  if (sec.type === 'win') {
     document.getElementById('pTitle').textContent = '🎉 ยินดีด้วย! ได้ขนม!';
-    document.getElementById('pSub').textContent   = `คุณได้รับขนม 1 ชิ้น (ต้นทุน 6฿) | เหลือขนม ${stock} ชิ้น`;
+    document.getElementById('pSub').textContent   = `คุณได้รับขนม 1 ชิ้น | เหลือขนม ${stock} ชิ้น`;
     launchConfetti();
   } else {
     document.getElementById('pTitle').textContent = '😢 เสียใจด้วย';
@@ -487,35 +557,32 @@ function showPopup(section) {
   overlay.classList.add('show');
   requestAnimationFrame(() => popup.classList.add('show'));
 }
-
 function closePopup() {
   popup.classList.remove('show');
   overlay.classList.remove('show');
 }
 
-overlay.addEventListener('click', closePopup);
-closeBtn.addEventListener('click', closePopup);
-
 /* ── CONFETTI ───────────────────────────────────────────────────────── */
-const EMOJIS = ['🍬','🍭','🍡','🍩','🍪','🍫','🧁','🌟','✨','🎊'];
+const CE = ['🍬','🍭','🍡','🍩','🍪','🍫','🧁','🌟','✨','🎊'];
 function launchConfetti() {
-  for (let i = 0; i < 18; i++) {
+  for (let i = 0; i < 20; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
-    el.textContent = EMOJIS[Math.floor(Math.random() * EMOJIS.length)];
-    el.style.left     = Math.random() * 100 + 'vw';
-    el.style.fontSize = (1.2 + Math.random() * 1.4) + 'rem';
-    const dur = 1.6 + Math.random() * 1.4;
-    el.style.animationDuration = dur + 's';
-    el.style.animationDelay    = (Math.random() * 0.4) + 's';
+    el.textContent = CE[Math.floor(Math.random()*CE.length)];
+    el.style.left = Math.random()*100+'vw';
+    el.style.fontSize = (1.1+Math.random()*1.4)+'rem';
+    const dur = 1.6+Math.random()*1.4;
+    el.style.animationDuration = dur+'s';
+    el.style.animationDelay = (Math.random()*.4)+'s';
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), (dur + 0.5) * 1000);
+    setTimeout(() => el.remove(), (dur+.5)*1000);
   }
 }
 
 /* ── INIT ───────────────────────────────────────────────────────────── */
-drawWheel();
-buildDots();
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+initState();
 </script>
 </body>
 </html>
